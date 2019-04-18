@@ -13,19 +13,19 @@ class ConnectionWrapper extends Connection
     private $lastExecuteAt = null;
 
     /**
-     * @var int Time in seconds between database connection checks
+     * @var int Seconds since recently executed query to check connection alive
      *
-     * Need to set the time between pings less than the database timeout.
-     * MySQL wait_timeout parameter is 28800 seconds by default.
+     * Should be less than the database inactivity timeout.
+     * MySQL `wait_timeout` parameter equals to 28800 seconds by default.
      */
-    private $secondsBetweenPings = 28000;
+    private $healtcheckTimeout = 28000;
 
     /**
-     * @param int $secondsBetweenPings
+     * @param int $healtcheckTimeout
      */
-    public function setSecondsBetweenPings(int $secondsBetweenPings): void
+    public function setHealtcheckTimeout(int $healtcheckTimeout): void
     {
-        $this->secondsBetweenPings = $secondsBetweenPings;
+        $this->healtcheckTimeout = $healtcheckTimeout;
     }
 
     public function executeQuery($query, array $params = [], $types = [], ?QueryCacheProfile $qcp = null)
@@ -39,7 +39,7 @@ class ConnectionWrapper extends Connection
 
     private function checkConnection()
     {
-        if ($this->lastExecuteAt == null || time() - $this->lastExecuteAt < $this->secondsBetweenPings) {
+        if ($this->lastExecuteAt == null || time() - $this->lastExecuteAt < $this->healtcheckTimeout) {
             return;
         }
 

@@ -19,7 +19,7 @@ class ConnectionWrapperConfigurationCompilerPass implements CompilerPassInterfac
             $def = $container->getDefinition($connectionServiceName);
             if ($def->getClass() === ConnectionWrapper::class) {
                 $def->addMethodCall(
-                    'setSecondsBetweenPings', 
+                    'setHealtcheckTimeout', 
                     [
                         new Parameter('doctrine_reconnect.healthcheck_timeout')
                     ]
