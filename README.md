@@ -13,7 +13,7 @@ After that you can set up time between database pings (28000 seconds by default)
 ```yaml
 # file: config/packages/doctrine_reconnect.yaml
 doctrine_reconnect:
-    seconds_between_pings: 28000
+    healthcheck_timeout: 28000
 ```
 
 ## Doctrine configuration

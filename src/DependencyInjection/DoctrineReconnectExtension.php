@@ -17,6 +17,9 @@ class DoctrineReconnectExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        $container->setParameter('doctrine_reconnect.seconds_between_pings', $config['seconds_between_pings']);
+        $container->setParameter(
+            'doctrine_reconnect.healthcheck_timeout', 
+            $config['healthcheck_timeout']
+        );
     }
 }
