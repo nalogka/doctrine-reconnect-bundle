@@ -16,7 +16,7 @@ class Configuration implements ConfigurationInterface
 
         $treeBuilder->getRootNode()
             ->children()
-            ->integerNode('seconds_between_pings')->defaultValue(28000)->end()
+            ->integerNode('healthcheck_timeout')->defaultValue(28000)->end()
             ->end();
 
         return $treeBuilder;
