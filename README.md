@@ -1,6 +1,9 @@
 Doctrine reconnect
 =========================================================
-Symfony bundle that calls the `\Doctrine\DBAL\Connection::ping` if enough time has passed since the last executed query to the database.
+Symfony bundle that checks connection has alive and reconnects if has not.
+
+It calls `\Doctrine\DBAL\Connection::ping()` before the actual query would
+be executed in condition that previously query has been executed certain time ago.
 
 ## Installing
 
@@ -8,7 +11,7 @@ Symfony bundle that calls the `\Doctrine\DBAL\Connection::ping` if enough time h
 composer require nalogka/doctrine-reconnect-bundle
 ```
 
-After that you can set up time between database pings (28000 seconds by default):
+After that you can set up inactivity timeout (28000 seconds by default):
 
 ```yaml
 # file: config/packages/doctrine_reconnect.yaml
@@ -18,7 +21,7 @@ doctrine_reconnect:
 
 ## Doctrine configuration
 
-Set bundle wrapper class as Doctrine DBAL Wrapper
+Set connection wrapper class provided by Bundle as Doctrine DBAL Wrapper
 
 ```yaml
 # file: config/packages/doctrine.yaml
