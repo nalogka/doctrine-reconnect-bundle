@@ -19,9 +19,15 @@ class ConnectionWrapperConfigurationCompilerPass implements CompilerPassInterfac
             $def = $container->getDefinition($connectionServiceName);
             if ($def->getClass() === ConnectionWrapper::class) {
                 $def->addMethodCall(
-                    'setHealtcheckTimeout', 
+                    'setWaitBeforeRetry', 
                     [
-                        new Parameter('doctrine_reconnect.healthcheck_timeout')
+                        new Parameter('doctrine_reconnect.wait_before_retry')
+                    ]
+                );
+                $def->addMethodCall(
+                    'setMaxRetries', 
+                    [
+                        new Parameter('doctrine_reconnect.max_retries')
                     ]
                 );
             }

@@ -8,43 +8,111 @@ use Doctrine\DBAL\Connection;
 class ConnectionWrapper extends Connection
 {
     /**
-     * @var int Last query executed time
+     * @var int Number of retries to make before fail
      */
-    private $lastExecuteAt = null;
+    private $maxRetries = 12;
 
     /**
-     * @var int Seconds since recently executed query to check connection alive
-     *
-     * Should be less than the database inactivity timeout.
-     * MySQL `wait_timeout` parameter equals to 28800 seconds by default.
+     * @var int Microseconds wait before retry
      */
-    private $healtcheckTimeout = 28000;
+    private $waitBeforeRetry = 333333;
 
     /**
-     * @param int $healtcheckTimeout
+     * Set maximum number of retries before throwing an exception
+     * 
+     * @param int $maxRetries
+     * @return ConnectionWrapper
      */
-    public function setHealtcheckTimeout(int $healtcheckTimeout): void
+    public function setMaxRetries(int $maxRetries): ConnectionWrapper
     {
-        $this->healtcheckTimeout = $healtcheckTimeout;
+        $this->maxRetries = $maxRetries;
+
+        return $this;
     }
 
+    /**
+     * Set time (microseconds) to wait before retry
+     * 
+     * @param int $waitBeforeRetry
+     * @return ConnectionWrapper
+     */
+    public function setWaitBeforeRetry(int $waitBeforeRetry): ConnectionWrapper
+    {
+        $this->waitBeforeRetry = $waitBeforeRetry;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function executeQuery($query, array $params = [], $types = [], ?QueryCacheProfile $qcp = null)
     {
-        $this->checkConnection();
-
-        $this->lastExecuteAt = time();
-
-        return parent::executeQuery($query, $params, $types, $qcp);
+        return $this->reconnectIfFail(
+            function () use ($query, $params, $types, $qcp) {
+                return parent::executeQuery($query, $params, $types, $qcp);
+            }
+        );
     }
 
-    private function checkConnection()
+    /**
+     * @inheritdoc
+     */
+    public function executeUpdate($query, array $params = [], array $types = [])
     {
-        if ($this->lastExecuteAt == null || time() - $this->lastExecuteAt < $this->healtcheckTimeout) {
-            return;
+        return $this->reconnectIfFail(
+            function () use ($query, $params, $types) {
+                return parent::executeUpdate($query, $params, $types);
+            }
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function query(...$args)
+    {
+        return $this->reconnectIfFail(
+            function () use ($args) {
+                return parent::query(...$args);
+            }
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function exec($statement)
+    {
+        return $this->reconnectIfFail(
+            function () use ($statement) {
+                return parent::exec($statement);
+            }
+        );
+    }
+
+    /**
+     * Does an action and reconnects if connection is lost
+     */
+    public function reconnectIfFail(callable $action)
+    {
+        $retriesCountdown = $this->maxRetries;
+        while ($retriesCountdown--) {
+            try {
+                return $action();
+            } catch (\Doctrine\DBAL\DBALException $e) {
+                if (!$e->getPrevious() instanceof \ErrorException && !(
+                        $e->getPrevious() instanceof \PDOException 
+                        && 2002 /* hostname resolve failure */ === $e->getPrevious()->getCode()
+                    )
+                ) {
+                    break;
+                }
+                $this->close();
+                usleep($this->waitBeforeRetry);
+            }
         }
 
-        if ($this->ping() === false) {
-            $this->close();
-        }
+        throw $e;
     }
 }

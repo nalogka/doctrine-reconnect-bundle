@@ -17,9 +17,7 @@ class DoctrineReconnectExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        $container->setParameter(
-            'doctrine_reconnect.healthcheck_timeout', 
-            $config['healthcheck_timeout']
-        );
+        $container->setParameter('doctrine_reconnect.max_retries', $config['max_retries']);
+        $container->setParameter('doctrine_reconnect.wait_before_retry', $config['wait_before_retry']);
     }
 }

@@ -16,7 +16,8 @@ class Configuration implements ConfigurationInterface
 
         $treeBuilder->root('doctrine_reconnect')
             ->children()
-            ->integerNode('healthcheck_timeout')->defaultValue(28000)->end()
+            ->integerNode('max_retries')->defaultValue(12)->end()
+            ->integerNode('wait_before_retry')->defaultValue(333333)->end()
             ->end();
 
         return $treeBuilder;

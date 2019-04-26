@@ -6,6 +6,10 @@
     {
       "name": "Alexander Ladygin",
       "email": "hitslab@yandex.ru"
+    },
+    {
+      "name": "Anton Tyutin",
+      "email": "anton@tyutin.ru"
     }
   ],
   "minimum-stability": "stable",
