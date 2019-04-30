@@ -19,7 +19,7 @@ class ConnectionWrapper extends Connection
 
     /**
      * Set maximum number of retries before throwing an exception
-     * 
+     *
      * @param int $maxRetries
      * @return ConnectionWrapper
      */
@@ -32,7 +32,7 @@ class ConnectionWrapper extends Connection
 
     /**
      * Set time (microseconds) to wait before retry
-     * 
+     *
      * @param int $waitBeforeRetry
      * @return ConnectionWrapper
      */
@@ -101,11 +101,7 @@ class ConnectionWrapper extends Connection
             try {
                 return $action();
             } catch (\Doctrine\DBAL\DBALException $e) {
-                if (!$e->getPrevious() instanceof \ErrorException && !(
-                        $e->getPrevious() instanceof \PDOException 
-                        && 2002 /* hostname resolve failure */ === $e->getPrevious()->getCode()
-                    )
-                ) {
+                if (!$this->isConnectionFailure($e->getPrevious())) {
                     break;
                 }
                 $this->close();
@@ -114,5 +110,19 @@ class ConnectionWrapper extends Connection
         }
 
         throw $e;
+    }
+
+    private function isConnectionFailure(\Exception $e)
+    {
+        // In some versions of PDO, \ErrorException was thrown when "MySQL server has gone away" occurred.
+        if ($e instanceof \ErrorException) {
+            return true;
+        }
+
+        if ($e instanceof \Doctrine\DBAL\Driver\PDOException && $e->getErrorCode() >= 2000) {
+            return true;
+        }
+
+        return false;
     }
 }
